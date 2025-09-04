@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On-Topic Mining Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        :root {
+            --mc-green: #59B555;
+            --mc-brown-dark: #3B2713;
+            --mc-red: #C73E38;
+            --mc-diamond: #65F2D9;
+            --mc-stone: #7F7F7F;
+            --mc-stone-dark: #555555;
+            --mc-ui-bg: #C6C6C6;
+            --mc-ui-border: #F5F5F5;
+            --mc-ui-border-dark: #5A5A5A;
+            --mc-skin: #FDD7A8;
+            --mc-hair: #3B2713;
+            --mc-shirt: #4DB0D0;
+            --mc-pants: #3C50A0;
+            --mc-gold: #F8D622;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #4A82A3;
+            background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+            color: #FFFFFF;
+            text-align: center;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        #game-container {
+            max-width: 800px;
+            width: 100%;
+            margin: auto;
+            background-color: var(--mc-ui-bg);
+            border: 4px solid var(--mc-ui-border-dark);
+            border-right-color: var(--mc-ui-border);
+            border-bottom-color: var(--mc-ui-border);
+            padding: 20px;
+        }
+
+        h1, h2 {
+            text-shadow: 2px 2px #000000A0;
+            color: white;
+        }
+
+        h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
+        h2 { font-size: clamp(0.9rem, 2.5vw, 1.2rem); margin-bottom: 20px; }
+        
+        #intro-main-panel, #quests-main-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        #character-panel {
+            position: relative;
+            width: 200px;
+            height: 300px;
+        }
+        
+        #mc-character {
+            width: 150px;
+            height: 270px;
+            margin: auto;
+            position: relative;
+        }
+        
+        /* Detailed Character Styles */
+        .mc-part { 
+            position: absolute; 
+            border: 4px solid var(--mc-brown-dark); 
+            box-sizing: border-box; 
+            box-shadow: inset 0 6px rgba(255,255,255,0.2), inset 0 -6px rgba(0,0,0,0.2);
+        }
+        #mc-head { width: 90px; height: 90px; background-color: var(--mc-skin); top: 20px; left: 50%; transform: translateX(-50%); z-index: 10;}
+        #mc-hair { width: 90px; height: 30px; background-color: var(--mc-hair); top: 20px; left: 50%; transform: translateX(-50%); border-bottom: none; z-index: 11; transition: opacity 0.3s;}
+        .mc-eye { width: 15px; height: 20px; background-color: white; top: 55px; border-width: 2px; box-shadow: none; transition: opacity 0.3s;}
+        #mc-eye-left { left: 45px; }
+        #mc-eye-right { right: 45px; }
+        .mc-pupil { width: 10px; height: 10px; background-color: #3C89A0; position: absolute; bottom: 0; left: 2.5px; border: none; box-shadow: none;}
+        .hidden { opacity: 0 !important; }
+        
+        #mc-body { width: 90px; height: 120px; background-color: var(--mc-shirt); top: 110px; left: 50%; transform: translateX(-50%); z-index: 5;}
+        .mc-arm { width: 30px; height: 120px; background-color: var(--mc-shirt); top: 110px; z-index: 6;}
+        #mc-arm-left { left: 0; }
+        #mc-arm-right { right: 0; }
+        .mc-hand { width: 30px; height: 30px; background-color: var(--mc-skin); position: absolute; bottom: -4px; }
+        
+        #mc-legs { width: 90px; height: 60px; top: 230px; left: 50%; transform: translateX(-50%); border: none; box-shadow: none; z-index: 4;}
+        .mc-leg { width: 45px; height: 60px; background-color: var(--mc-pants); position: absolute; }
+        #mc-leg-left { left: 0px; }
+        #mc-leg-right { right: 0px; }
+        .mc-shoe { width: 45px; height: 20px; background-color: var(--mc-stone-dark); position: absolute; bottom: -4px; }
+
+
+        .equip-item {
+            position: absolute;
+            opacity: 0;
+            transform: scale(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 12;
+        }
+        .visible { 
+            opacity: 1; 
+            transform: scale(1);
+        }
+
+        #equip-helmet.visible,
+        #equip-goggles.visible,
+        #equip-boots.visible {
+            transform: translateX(-50%) scale(1);
+        }
+        #equip-talk-bubble.visible {
+            transform: scale(1);
+        }
+
+        #equip-helmet {
+            width: 98px; height: 34px;
+            top: 18px; left: 50%; transform: translateX(-50%) scale(0);
+            border: 4px solid var(--mc-brown-dark);
+            background-color: var(--mc-gold);
+            box-shadow: inset 0 6px rgba(255,255,255,0.4), inset 0 -6px rgba(0,0,0,0.2);
+            z-index: 12;
+        }
+
+        #equip-goggles {
+            width: 80px; height: 25px;
+            top: 60px; left: 50%; transform: translateX(-50%) scale(0);
+            display: flex;
+            justify-content: space-between;
+            z-index: 11;
+        }
+        .goggle-lens {
+            width: 35px;
+            height: 25px;
+            background-color: #111;
+            border: 4px solid var(--mc-brown-dark);
+            box-shadow: inset 0 4px rgba(255,255,255,0.1);
+        }
+        #equip-boots {
+            width: 98px; height: 28px;
+            top: 266px; left: 50%; transform: translateX(-50%) scale(0); z-index: 5;
+        }
+        .boot {
+            width: 49px; height: 28px; background-color: #333;
+            position: absolute; border: 4px solid var(--mc-brown-dark);
+            box-shadow: inset 0 4px rgba(255,255,255,0.2);
+        }
+        #boot-left { left: 0; }
+        #boot-right { right: 0; }
+        
+        #equip-talk-bubble {
+            font-size: 2.5em; top: 70px; left: 125px;
+            transform-origin: bottom left;
+        }
+
+        #controls-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .intro-button {
+            padding: 15px;
+            font-size: 0.9em;
+            width: 100%;
+            max-width: 280px;
+            background-color: var(--mc-stone);
+            border: 4px solid var(--mc-ui-border-dark);
+            border-right-color: var(--mc-ui-border);
+            border-bottom-color: var(--mc-ui-border);
+            cursor: pointer;
+        }
+        .intro-button:active { border-color: var(--mc-ui-border-dark); }
+        .intro-button.completed { background-color: var(--mc-green); }
+
+        #explanation-box {
+            background-color: #313131;
+            border: 4px solid var(--mc-ui-border-dark);
+            padding: 15px;
+            min-height: 120px;
+            text-align: left;
+            font-size: 0.8em;
+            line-height: 1.5;
+        }
+        #explanation-box strong { color: var(--mc-green); }
+
+        /* GAME SCREEN */
+        #game-screen { display: none; }
+        
+        #topic-box {
+            background-color: #BC8A5B;
+            padding: 15px;
+            border: 4px solid var(--mc-brown-dark);
+            box-shadow: inset 0 0 0 4px #DDC48A;
+            margin: 20px auto;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            color: var(--mc-brown-dark);
+            text-shadow: none;
+        }
+
+        #scenario-box { font-size: clamp(1rem, 4vw, 1.3rem); min-height: 80px; margin: 20px 0; }
+        
+        #target-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 30px auto;
+        }
+        
+        .wool-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 5px;
+        }
+        #red-wool { background-color: var(--mc-red); }
+        #white-wool { background-color: #E9ECEC; width: 70%; height: 70%; top: 15%; left: 15%; }
+        #diamond-block-target { background-color: var(--mc-diamond); width: 40%; height: 40%; top: 30%; left: 30%; border: 4px solid #5A5A5A; box-sizing: border-box; }
+        
+        #pickaxe-animator {
+            position: absolute;
+            font-size: 5em;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        #pickaxe-animator.swing-bullseye { animation: swing-bullseye 0.7s forwards; }
+        @keyframes swing-bullseye {
+            0% { opacity: 1; top: 50%; left: -80px; transform: translateY(-50%) rotate(45deg); }
+            50% { top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); }
+            100% { opacity: 0; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); }
+        }
+
+        #pickaxe-animator.swing-outside { animation: swing-outside 0.7s forwards; }
+        @keyframes swing-outside {
+            0% { opacity: 1; top: -80px; left: 50%; transform: translateX(-50%) rotate(-45deg); }
+            50% { top: 0; left: 50%; transform: translate(-50%, -50%) rotate(25deg); }
+            100% { opacity: 0; top: 0; left: 50%; transform: translate(-50%, -50%) rotate(25deg); }
+        }
+
+        .button {
+            padding: 15px 25px;
+            font-family: 'Press Start 2P', cursive;
+            background-color: var(--mc-stone);
+            color: white;
+            border: 4px solid var(--mc-ui-border-dark);
+            border-right-color: var(--mc-ui-border);
+            border-bottom-color: var(--mc-ui-border);
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        .button:active { border-color: var(--mc-ui-border-dark); }
+        
+        #start-button, #continue-to-chat-btn, #continue-to-quests-btn { background-color: var(--mc-green); display: none; margin-top: 15px; }
+        #on-topic-btn { background-color: #59B555; }
+        #off-topic-btn { background-color: #D5633D; }
+        #next-btn { display: none; }
+        #restart-btn { display: none; }
+        
+        /* CHAT SCREEN STYLES */
+        #chat-screen { display: none; }
+        #chat-log-container {
+            height: 300px;
+            background-color: rgba(0,0,0,0.5);
+            border: 4px solid var(--mc-stone-dark);
+            padding: 10px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        .player-message {
+            color: white;
+        }
+        .alex-message {
+            color: #AAAAAA;
+        }
+        .feedback-icon {
+            margin-left: 10px;
+        }
+        #chat-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .choice-button {
+            width: 100%;
+            max-width: 500px;
+            font-size: 0.8em;
+        }
+
+        /* QUEST SCREEN STYLES */
+        #quests-screen { display: none; }
+        #quests-panel {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .quest-item {
+            background-color: #313131;
+            border: 4px solid var(--mc-ui-border-dark);
+            padding: 15px;
+            text-align: left;
+            font-size: 0.8em;
+            line-height: 1.5;
+        }
+        .quest-item strong {
+            color: var(--mc-gold);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+
+        footer { margin-top: 30px; font-size: 0.8em; color: var(--mc-stone-dark); }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- INTRO SCREEN -->
+        <div id="intro-screen">
+            <h1>On-Topic Mining</h1>
+            <h2>Let's get our player ready to focus!</h2>
+            <div id="intro-main-panel">
+                <div id="character-panel">
+                    <div id="mc-character">
+                        <!-- Head -->
+                        <div id="mc-head" class="mc-part">
+                            <div class="mc-eye mc-part" id="mc-eye-left"><div class="mc-pupil mc-part"></div></div>
+                            <div class="mc-eye mc-part" id="mc-eye-right"><div class="mc-pupil mc-part"></div></div>
+                        </div>
+                        <div id="mc-hair" class="mc-part"></div>
+                        
+                        <!-- Body -->
+                        <div id="mc-body" class="mc-part"></div>
+                        <div class="mc-arm mc-part" id="mc-arm-left"><div class="mc-hand mc-part"></div></div>
+                        <div class="mc-arm mc-part" id="mc-arm-right"><div class="mc-hand mc-part"></div></div>
+
+                        <!-- Legs -->
+                        <div id="mc-legs" class="mc-part">
+                             <div class="mc-leg mc-part" id="mc-leg-left"><div class="mc-shoe mc-part"></div></div>
+                             <div class="mc-leg mc-part" id="mc-leg-right"><div class="mc-shoe mc-part"></div></div>
+                        </div>
+
+                        <!-- Equipment -->
+                        <div id="equip-helmet" class="equip-item"></div>
+                        <div id="equip-goggles" class="equip-item">
+                            <div class="goggle-lens"></div>
+                            <div class="goggle-lens"></div>
+                        </div>
+                        <div id="equip-talk-bubble" class="equip-item">💬</div>
+                        <div id="equip-boots" class="equip-item">
+                            <div class="boot" id="boot-left"></div>
+                            <div class="boot" id="boot-right"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="controls-panel">
+                    <div id="intro-controls">
+                        <button class="intro-button" data-part="eyes">👀 Eyes</button>
+                        <button class="intro-button" data-part="mouth">👄 Mouth</button>
+                        <button class="intro-button" data-part="body">🧍 Body</button>
+                        <button class="intro-button" data-part="brain">🧠 Brain</button>
+                    </div>
+                    <div id="explanation-box">
+                        <p>Click a button to get your player ready for an ON-TOPIC adventure!</p>
+                    </div>
+                </div>
+            </div>
+            <button class="button" id="start-button">Start Mining!</button>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="game-screen">
+            <h1>On-Topic Mining</h1>
+            <div id="topic-box">Topic: <span id="current-topic"></span></div>
+            <div id="scenario-box"></div>
+            <div id="target-container">
+                <div id="red-wool" class="wool-ring"></div>
+                <div id="white-wool" class="wool-ring"></div>
+                <div id="diamond-block-target" class="wool-ring"></div>
+                <div id="pickaxe-animator">⛏️</div>
+            </div>
+            <div id="choice-buttons">
+                <button class="button" id="on-topic-btn">On Topic</button>
+                <button class="button" id="off-topic-btn">Off Topic</button>
+            </div>
+            <button class="button" id="next-btn">Next Block</button>
+            <button class="button" id="continue-to-chat-btn">Continue to Chat</button>
+        </div>
+
+        <!-- CHAT SCREEN -->
+        <div id="chat-screen">
+            <h1>On-Topic Chat</h1>
+            <h2>Keep the conversation going with Alex!</h2>
+            <div id="chat-log-container">
+                <div id="chat-log"></div>
+            </div>
+            <div id="chat-choices"></div>
+            <button class="button" id="continue-to-quests-btn">View Your Quests</button>
+        </div>
+
+        <!-- QUEST SCREEN -->
+        <div id="quests-screen">
+            <h1>Real-Life Quests</h1>
+            <h2>Achievement: On-Topic Adventurer!</h2>
+            <div id="quests-main-panel">
+                <div id="character-panel">
+                     <div id="mc-character">
+                        <!-- Head -->
+                        <div id="mc-head" class="mc-part"></div>
+                        <div id="mc-hair" class="mc-part hidden"></div>
+                        <!-- Body -->
+                        <div id="mc-body" class="mc-part"></div>
+                        <div class="mc-arm mc-part" id="mc-arm-left"><div class="mc-hand mc-part"></div></div>
+                        <div class="mc-arm mc-part" id="mc-arm-right"><div class="mc-hand mc-part"></div></div>
+                        <!-- Legs -->
+                        <div id="mc-legs" class="mc-part">
+                             <div class="mc-leg mc-part" id="mc-leg-left"></div>
+                             <div class="mc-leg mc-part" id="mc-leg-right"></div>
+                        </div>
+                        <!-- All Equipment visible -->
+                        <div id="equip-helmet" class="equip-item visible"></div>
+                        <div id="equip-goggles" class="equip-item visible">
+                            <div class="goggle-lens"></div>
+                            <div class="goggle-lens"></div>
+                        </div>
+                        <div id="equip-talk-bubble" class="equip-item visible">💬</div>
+                        <div id="equip-boots" class="equip-item visible">
+                            <div class="boot" id="boot-left"></div>
+                            <div class="boot" id="boot-right"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="quests-panel">
+                    <div class="quest-item">
+                        <strong>Quest 1: The Dinner Table</strong>
+                        <p>Tonight at dinner, your mission is to use your ON-TOPIC Mouth! Try to ask one question about something your family is talking about.</p>
+                    </div>
+                    <div class="quest-item">
+                        <strong>Quest 2: The Playground</strong>
+                        <p>When you're playing with friends, your mission is to use your ON-TOPIC Body! Try to keep your body turned toward the game you are all playing.</p>
+                    </div>
+                    <div class="quest-item">
+                        <strong>Quest 3: Story Time</strong>
+                        <p>During story time, your mission is to use your ON-TOPIC Eyes and Brain! Keep your eyes on the teacher and think about the story.</p>
+                    </div>
+                </div>
+            </div>
+            <button class="button" id="restart-btn">Start Over</button>
+        </div>
+
+
+        <footer>
+            Black Hills Speech Solutions
+        </footer>
+    </div>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (!audioContext) return;
+            try {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+
+                if (type === 'positive') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.3);
+                } else if (type === 'negative') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.3);
+                } else { // equip sound
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(440, audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.2);
+                }
+                
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 0.3);
+            } catch (e) { console.error("Sound error", e); }
+        }
+
+        // --- PART 1: INTRO LOGIC ---
+        const introParts = {
+            eyes: { cue: "<strong>Goggles</strong> help your eyes stay ON-TOPIC!", example: "If the topic is crafting a sword, your eyes are looking at the crafting table. That's ON-TOPIC! Looking at a chicken walking by is OFF-TOPIC." },
+            mouth: { cue: "Your <strong>Mouth</strong> is ON-TOPIC when it uses words that match the adventure!", example: "If the topic is 'fighting a creeper,' saying 'Get your bow ready!' is ON-TOPIC. Saying 'I like pigs' is OFF-TOPIC." },
+            body: { cue: "<strong>Boots</strong> mean your body is ON-TOPIC, ready to move with the group!", example: "If you're exploring a cave together, your body is following your friends. That's ON-TOPIC! Running the other way is OFF-TOPIC." },
+            brain: { cue: "A <strong>Helmet</strong> keeps your brain ON-TOPIC and safe from distracting thoughts!", example: "When mining for diamonds, an ON-TOPIC thought is 'I should dig deeper!' An OFF-TOPIC thought is 'I wonder if it's nighttime?'" }
+        };
+        
+        const introButtons = document.querySelectorAll('.intro-button');
+        const explanationBox = document.getElementById('explanation-box');
+        const startButton = document.getElementById('start-button');
+        const mcHair = document.getElementById('mc-hair');
+        const mcEyes = document.querySelectorAll('.mc-eye');
+        const completedParts = new Set();
+
+        introButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (button.classList.contains('completed')) return;
+                playSound('equip');
+                const part = button.dataset.part;
+                
+                explanationBox.innerHTML = `<p>${introParts[part].cue}</p><p>${introParts[part].example}</p>`;
+                
+                if (part === 'eyes') {
+                    document.getElementById('equip-goggles').classList.add('visible');
+                    mcEyes.forEach(eye => eye.classList.add('hidden'));
+                } else if (part === 'mouth') {
+                    document.getElementById('equip-talk-bubble').classList.add('visible');
+                } else if (part === 'body') {
+                    document.getElementById('equip-boots').classList.add('visible');
+                } else if (part === 'brain') {
+                    document.getElementById('equip-helmet').classList.add('visible');
+                    mcHair.classList.add('hidden');
+                }
+                
+                button.classList.add('completed');
+                completedParts.add(part);
+                if (completedParts.size === 4) {
+                    startButton.style.display = 'block';
+                }
+            });
+        });
+        
+        // --- PART 2: MINING LOGIC ---
+        const scenarios = [
+            { topic: 'Building a house', scenario: "You say, 'We should use oak wood for the walls!'", isOnTopic: true },
+            { topic: 'Fighting a creeper', scenario: "Your friend is making a plan, but you turn around and start punching a sheep.", isOnTopic: false },
+            { topic: 'Mining for diamonds', scenario: "You think to yourself, 'I need to dig deeper to find diamonds.'", isOnTopic: true },
+            { topic: 'Crafting a sword', scenario: "Steve is explaining the recipe, and you look at the crafting table while he talks.", isOnTopic: true },
+            { topic: 'Exploring a cave', scenario: "You start talking about your favorite breakfast food while looking for iron.", isOnTopic: false },
+            { topic: 'Planting a farm', scenario: "You ask, 'Do we have any carrot seeds?'", isOnTopic: true },
+            { topic: 'Taming a wolf', scenario: "Your friend is trying to give it a bone, but you keep jumping in front of them.", isOnTopic: false }
+        ];
+        let currentScenarioIndex = 0;
+        const introScreen = document.getElementById('intro-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const topicSpan = document.getElementById('current-topic');
+        const scenarioBox = document.getElementById('scenario-box');
+        const onTopicBtn = document.getElementById('on-topic-btn');
+        const offTopicBtn = document.getElementById('off-topic-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const continueToChatBtn = document.getElementById('continue-to-chat-btn');
+        const choiceButtons = document.getElementById('choice-buttons');
+        const pickaxeAnimator = document.getElementById('pickaxe-animator');
+
+        startButton.addEventListener('click', () => { introScreen.style.display = 'none'; gameScreen.style.display = 'block'; loadScenario(); });
+        
+        function loadScenario() {
+            if (currentScenarioIndex >= scenarios.length) {
+                scenarioBox.innerHTML = "<h2>Great job! You finished the mining adventure!</h2>";
+                choiceButtons.style.display = 'none';
+                nextBtn.style.display = 'none';
+                continueToChatBtn.style.display = 'inline-block';
+                return;
+            }
+            const currentScenario = scenarios[currentScenarioIndex];
+            topicSpan.textContent = currentScenario.topic;
+            scenarioBox.textContent = currentScenario.scenario;
+            choiceButtons.style.display = 'block';
+            nextBtn.style.display = 'none';
+            onTopicBtn.disabled = false;
+            offTopicBtn.disabled = false;
+        }
+        
+        function showResult(userChoiceIsOnTopic) {
+            onTopicBtn.disabled = true;
+            offTopicBtn.disabled = true;
+            
+            const correctAnwerIsOnTopic = scenarios[currentScenarioIndex].isOnTopic;
+
+            if (userChoiceIsOnTopic === correctAnwerIsOnTopic) {
+                playSound('positive');
+            } else {
+                playSound('negative');
+            }
+
+            pickaxeAnimator.className = 'pickaxe-animator';
+            void pickaxeAnimator.offsetWidth;
+            
+            if (correctAnwerIsOnTopic) {
+                pickaxeAnimator.classList.add('swing-bullseye');
+            } else {
+                pickaxeAnimator.classList.add('swing-outside');
+            }
+            
+            choiceButtons.style.display = 'none';
+            setTimeout(() => {
+                nextBtn.style.display = 'inline-block';
+            }, 800);
+        }
+        
+        onTopicBtn.addEventListener('click', () => showResult(true));
+        offTopicBtn.addEventListener('click', () => showResult(false));
+        nextBtn.addEventListener('click', () => { currentScenarioIndex++; loadScenario(); });
+        
+        // --- PART 3: CHAT LOGIC ---
+        const chatScreen = document.getElementById('chat-screen');
+        const chatLog = document.getElementById('chat-log');
+        const chatLogContainer = document.getElementById('chat-log-container');
+        const chatChoices = document.getElementById('chat-choices');
+        const continueToQuestsBtn = document.getElementById('continue-to-quests-btn');
+
+        const chatTurns = [
+            {
+                alexSays: "<Alex> I'm trying to build a new base. Should I build it in a forest or on a mountain?",
+                choices: [
+                    { text: "Mountains are great for seeing monsters coming!", isCorrect: true },
+                    { text: "I like fighting monsters with my sword.", isCorrect: false },
+                    { text: "My favorite food is bread.", isCorrect: false }
+                ],
+                correctReply: "<Alex> Good point! A mountain base would be safe.",
+                incorrectReply: "<Alex> Huh? Why are you talking about swords? I need help with my base first."
+            },
+            {
+                alexSays: "<Alex> Okay, the base is built on the mountain! Now what kind of animal should I tame for a pet?",
+                choices: [
+                    { text: "I found a diamond in a cave once.", isCorrect: false },
+                    { text: "Wolves are the best, they help you fight!", isCorrect: true },
+                    { text: "Pigs are pink.", isCorrect: false }
+                ],
+                correctReply: "<Alex> Oh yeah! A wolf would be a great guard for my new base.",
+                incorrectReply: "<Alex> That's interesting, but what about a pet? I need to choose an animal."
+            },
+            {
+                alexSays: "<Alex> My new wolf friend is awesome! Now, how should I decorate the inside of my base?",
+                choices: [
+                    { text: "What about a farm for food?", isCorrect: false },
+                    { text: "Paintings are a great idea to make it feel like home!", isCorrect: true },
+                    { text: "I need more iron for my armor.", isCorrect: false }
+                ],
+                correctReply: "<Alex> Awesome! I'll craft some paintings right now.",
+                incorrectReply: "<Alex> A farm is a good idea for later, but I want to decorate first. Any ideas?"
+            },
+            {
+                alexSays: "<Alex> The paintings look great! What should our next adventure be? Mining or exploring?",
+                choices: [
+                    { text: "My pickaxe is almost broken.", isCorrect: false },
+                    { text: "Let's go mining! We might find more diamonds!", isCorrect: true },
+                    { text: "Zombies are scary.", isCorrect: false }
+                ],
+                correctReply: "<Alex> To the mines it is! Let's go!",
+                incorrectReply: "<Alex> Um, okay... but should we go mining or exploring first?"
+            },
+             {
+                alexSays: "<Alex> Thanks for your help! We had a great adventure.",
+                choices: [],
+            }
+        ];
+        let currentChatTurn = 0;
+
+        continueToChatBtn.addEventListener('click', () => {
+            gameScreen.style.display = 'none';
+            chatScreen.style.display = 'block';
+            startChat();
+        });
+
+        function startChat() {
+            chatLog.innerHTML = '';
+            loadChatTurn();
+        }
+
+        function addMessageToLog(message, cssClass) {
+            chatLog.innerHTML += `<div class="chat-message ${cssClass}">${message}</div>`;
+            chatLogContainer.scrollTop = chatLogContainer.scrollHeight;
+        }
+
+        function loadChatTurn() {
+            const turn = chatTurns[currentChatTurn];
+            
+            addMessageToLog(turn.alexSays, 'alex-message');
+            
+            chatChoices.innerHTML = ''; 
+            if (turn.choices.length === 0) {
+                continueToQuestsBtn.style.display = 'inline-block';
+                return;
+            }
+
+            turn.choices.forEach(choice => {
+                const button = document.createElement('button');
+                button.className = 'button choice-button';
+                button.textContent = choice.text;
+                button.onclick = () => handleChatChoice(choice);
+                chatChoices.appendChild(button);
+            });
+        }
+
+        function handleChatChoice(choice) {
+            chatChoices.innerHTML = '';
+            const feedbackIcon = choice.isCorrect ? '✅' : '❌';
+            addMessageToLog(`> ${choice.text} <span class="feedback-icon">${feedbackIcon}</span>`, 'player-message');
+            playSound(choice.isCorrect ? 'positive' : 'negative');
+            
+            const turn = chatTurns[currentChatTurn];
+            const reply = choice.isCorrect ? turn.correctReply : turn.incorrectReply;
+            
+            setTimeout(() => {
+                addMessageToLog(reply, 'alex-message');
+                currentChatTurn++;
+                
+                setTimeout(() => {
+                    loadChatTurn();
+                }, 1500);
+
+            }, 1200);
+        }
+
+        // --- PART 4: QUESTS LOGIC ---
+        const questsScreen = document.getElementById('quests-screen');
+        const restartBtn = document.getElementById('restart-btn');
+
+        continueToQuestsBtn.addEventListener('click', () => {
+            chatScreen.style.display = 'none';
+            questsScreen.style.display = 'block';
+            restartBtn.style.display = 'inline-block';
+        });
+
+        // Final restart button logic
+        restartBtn.addEventListener('click', () => {
+            currentScenarioIndex = 0;
+            currentChatTurn = 0;
+            completedParts.clear();
+            introButtons.forEach(button => button.classList.remove('completed'));
+            document.querySelectorAll('.equip-item').forEach(icon => icon.classList.remove('visible'));
+            mcHair.classList.remove('hidden');
+            mcEyes.forEach(eye => eye.classList.remove('hidden'));
+            explanationBox.innerHTML = "<p>Click a button to get your player ready for an ON-TOPIC adventure!</p>";
+            
+            // Hide all buttons that control flow between screens
+            startButton.style.display = 'none';
+            continueToChatBtn.style.display = 'none';
+            continueToQuestsBtn.style.display = 'none';
+
+            // Show intro, hide others
+            introScreen.style.display = 'block';
+            gameScreen.style.display = 'none';
+            chatScreen.style.display = 'none';
+            questsScreen.style.display = 'none';
+            restartBtn.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
+
